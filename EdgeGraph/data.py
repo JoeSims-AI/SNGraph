@@ -3,7 +3,6 @@ import pandas as pd
 import torch
 from torch_geometric.data import Data
 from sklearn.model_selection import train_test_split
-from EdgeGraph import EdgeGAT
 
 
 def one_hot_encoder(data,

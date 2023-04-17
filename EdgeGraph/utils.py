@@ -181,7 +181,6 @@ def calculate_sf(file,
         else:
             file = pd.read_csv(file)
 
-    xsf = file['X(px)'].mean() / file['X(um)'].mean()
-    ysf = file['Y(px)'].mean() / file['Y(um)'].mean()
+    xsf = file[f'X({numerator})'].mean() / file[f'X({denominator})'].mean()
+    ysf = file[f'Y({numerator})'].mean() / file[f'Y({denominator})'].mean()
     return xsf, ysf
-

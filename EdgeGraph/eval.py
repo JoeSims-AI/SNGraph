@@ -1,8 +1,6 @@
 import torch
-from torch import Tensor
 import numpy as np
 import pandas as pd
-from sklearn.metrics import accuracy_score, confusion_matrix
 from sksurv.metrics import concordance_index_censored
 
 
@@ -52,3 +50,82 @@ def calculate_cindex(model,
     return c_index
 
 
+def precision(cm) -> float:
+    """
+    Calculate the precision from the confusion matrix.
+
+    :param cm: confusion matrix.
+    :type cm: np.ndarray
+    :return precision:
+    """
+    return cm[0, 0] / (cm[0, 0] + cm[1, 0])
+
+
+def recall(cm) -> float:
+    """
+    Calculate the recall from the confusion matrix.
+    :param cm: confusion matrix.
+    :type cm: np.ndarray
+    :return recall:
+    """
+    return cm[0, 0] / (cm[0, 0] + cm[0, 1])
+
+
+def f1(cm) -> float:
+    """
+    Calculate the f1 score from the confusion matrix.
+
+    :param cm: confusion matrix.
+    :type cm: np.ndarray
+    :return f1:
+    """
+    p = precision(cm)
+    r = recall(cm)
+    return 2 * ((p * r) / (p + r))
+
+
+def balanced_acc(cm) -> float:
+    """
+    This method calculates the recalls for each class and takes the average
+    and apparently this is the balanced accuracy.
+
+    :param cm: confusion matrix.
+    :type cm: np.ndarray
+    :return balanced_acc:
+    """
+    recalls = []
+    for i in range(cm.shape[0]):
+        if cm[i, :].sum() > 0:
+            recalls.append(cm[i, i] / cm[i, :].sum())
+        else:
+            recalls.append(0)
+    return sum(recalls) / len(recalls)
+
+
+def format_cm(cm,
+              dp=None):
+    """
+    This takes confusion matrices and prints them in a nice manner.
+    If the dp is specified then the values will be rounded to this many
+    significant figures.
+
+    :param cm: The confusion matrix.
+    :type cm: np.ndarray
+    :param dp: The number of places to round to.
+        (default :obj: `3`)
+    :type dp: int
+    """
+    if cm.max() < 1:
+        dp = 3 if dp is None else dp
+        cm = np.round(cm, dp)
+
+    cm_string = ''
+    max_len = len(str(cm.max()))
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            elem = str(cm[i, j])
+            space = ' ' * (max_len - len(elem) + 2)
+            cm_string += space + elem
+        cm_string += '\n'
+
+    return cm_string

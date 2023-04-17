@@ -1,6 +1,5 @@
 from EdgeGraph.EdgeGAT import Edge_GATConv
 import torch.nn as nn
-import torch.nn.functional as F
 import torch
 import torch_geometric.utils as tgu
 from torch_scatter import scatter_add
@@ -82,7 +81,7 @@ class GraphAttSurv(nn.Module):
                  n_message_passing=4,
                  mlp_features=64,
                  attention_features=128,
-                 batch_size=1):
+                 ):
         """
         :param in_features: The number of input node features. (default :obj:`17`).
         :type in_features: positive int

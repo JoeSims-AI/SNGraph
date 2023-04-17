@@ -1,6 +1,6 @@
 import time
 from os.path import *
-import numpy as np
+import pandas as pd
 from glob import glob
 
 
@@ -155,3 +155,33 @@ def ceil_to(input_value,
     """
     rounded = round_to(input_value, round_value)
     return rounded if rounded >= input_value else rounded + round_value
+
+
+def calculate_sf(file,
+                 numerator="px",
+                 denominator="um"):
+    """
+    This function finds the linear scale factor between units.
+    For example, when dealing with node locations within a digital pathology image, the location is specified in
+    pixels (px) and micrometers (um). When dealing with images and physical sizes, we want to convert between them
+    so we use a scale factor to do this.
+
+    :param file: Either the path or the pandas df for the node locations.
+    :type file: str or pandas.DataFrame
+    :param numerator: The target units. (default :obj:`px`).
+    :type numerator: str
+    :param denominator: The input units. (default :obj:`um`).
+    :type denominator: str
+    :return scale_factor:
+    """
+
+    if type(file) == str:
+        if not isfile(file):
+            raise Exception(f'File does not exist: {file}')
+        else:
+            file = pd.read_csv(file)
+
+    xsf = file['X(px)'].mean() / file['X(um)'].mean()
+    ysf = file['Y(px)'].mean() / file['Y(um)'].mean()
+    return xsf, ysf
+

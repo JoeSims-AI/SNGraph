@@ -76,4 +76,3 @@ def cox_loss_sorted(h,
     events = events[idx]
     h = h[idx]
     return cox_loss_ph(h, events)
-

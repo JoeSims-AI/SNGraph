@@ -1,6 +1,7 @@
 import torch
 from torch import Tensor
 
+
 def weighted_mean_squared_error(target,
                                 output,
                                 weights,

@@ -75,6 +75,8 @@ def get_params(path):
                   "LAYOUT": default_str(params, "LAYOUT", "square"),
                   "SEPARATION": default_int(params, "SEPARATION", 140),
                   "RADIUS": default_int(params, "RADIUS", 1),
+                  "SN2_SEPARATION": default_int(params, "SN2_SEPARATION", 2),
+                  "SN2_RADIUS": default_int(params, "SN2_RADIUS", 1),
                   "XPX_COL": default_str(params, "XPX_COL", "X(px)"),
                   "YPX_COL": default_str(params, "YPX_COL", "Y(px)"),
                   "X_COL": default_str(params, "XPX_COL", "X(um)"),

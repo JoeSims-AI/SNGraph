@@ -258,26 +258,32 @@ def create_level1_supernodes(node_path,
 
 def create_supernode_level(node_path,
                            edge_path,
-                           output_node_dir,
-                           output_edge_dir,
-                           outline=True,
+                           separation=2,
+                           radius_f=1,
                            supernode=2):
     """ Creating the first level of supernodes has it's own limitations with it being
     connected to the cell graph so I created a separate method for creating supernodes
     beyond the first level. This method should work for levels > 1 but is yet to be
     tested above 1 level of supernodes. Because I didn't have enough time to dedicate to
     combining the level 1 conditions with these, we have to methods.
+    As with the L1 method above, this works in 'um'.
+    For this specific method, the subsequent set of supernodes have the coordinates of every other
+    supernode from the previous set (like a the same grid but of twice the size.)
+
+
     :param node_path: The path to the csv file containing the nodes.
     :type node_path: str
     :param edge_path: The path to the csv file containing the edges.
     :type edge_path: str
-    :param output_node_dir: The directory to save the csv containing the nodes with supernodes.
-    :type output_node_dir: str
-    :param output_edge_dir: The directory to save the csv containing the edges with supernodes.
-    :type output_edge_dir: str
     :param outline: This determines whether to obtain the tma and tissue number (outline=True)
         or the id (outline=false). (default :obj:`True`).
     :type outline: bool
+    :param separation: I couldn't think of a better name. If you want this layer of supernodes to lie
+        on top over every 2nd node then this will be 2. If it is every 3rd previous-layer supernode then
+        it will be 3 and so on.
+    :type separation: int
+    :param radius_f: This is the connection radius as a factor of supernode separation. For example if you want the
+        connection radius to be equal to the separation of each supernode then radius_f=1. (default :obj:`1`)
     :param supernode: The hierarchical position of the supernodes that are to be created. (default :obj:`2`).
     :type supernode: positive int >= 2
     :return:
@@ -287,9 +293,7 @@ def create_supernode_level(node_path,
     node = pd.read_csv(node_path, low_memory=False)
     # Import edge data containing the previous supernode data.
     edge = pd.read_csv(edge_path)
-    # Get the specific tma id and tissue name.
-    if outline:
-        tma, tissue = tuple(get_id(node_path).split('_'))
+
     # Get the scale factors between the pixels and um positions.
     x_sf = np.mean(node['X(px)']) / np.mean(node['X(um)'])
     y_sf = np.mean(node['Y(px)']) / np.mean(node['Y(um)'])
@@ -306,13 +310,14 @@ def create_supernode_level(node_path,
     new_sn_coords = []
     for i in range(len(x_set)):
         for j in range(len(y_set)):
-            if i % 2 == 0 and j % 2 == 0:
+            if i % separation == 0 and j % separation == 0:
                 new_sn_coords.append([x_set[i], y_set[j]])
     new_sn_coords = np.asarray(new_sn_coords, dtype=np.int32)
     old_sn_coords = np.asarray(sn1s[['X(um)', 'Y(um)']], dtype=np.int32)
 
     # This is the separation of the previous sn coordinates.
     node_separation = x_set[1] - x_set[0]
+
     # Converts the coordinates to a list of tuples.
     old_sn_coords = [tuple(pair) for pair in old_sn_coords]
     new_sn_coords = [tuple(pair) for pair in new_sn_coords]
@@ -331,21 +336,16 @@ def create_supernode_level(node_path,
     dxdys = []
     # Get the distance between each new sn and the previous layer sns that are 1 step away.
     # Then appending the indices of these pairs, along with the distances.
+    sn1s_coords = np.asarray(sn1s[['X(um)', 'Y(um)']])
     for i, sn1 in tqdm(enumerate(keep_new_sns)):
-        counter = 0
-        for idx in sn1s.index.tolist():
-            xy = np.asarray(sn1s[['X(um)', 'Y(um)']].loc[idx])
-            dist = np.linalg.norm(sn1 - xy)
-            if dist == node_separation:
-                pair = [i + len(node), idx]
-                pairs.append(pair)
-                dists.append(dist)
-                dxdys.append(np.absolute(np.subtract(sn1, xy)).tolist())
-                counter += 1
-        if counter == 0:
-            pairs.append([i + len(node), i + len(node)])
-            dists.append(0)
-            dxdys.append([0, 0])
+
+        dist = np.linalg.norm(sn1 - sn1s_coords, axis=1, keepdims=False)
+        dxdy = np.absolute(np.subtract(sn1, sn1s_coords))
+        pair_list = np.array([[i + len(node)] * len(sn1s), sn1s.index.tolist()]).T
+        cond = ((node_separation * (separation-1) * radius_f) + 10 > dist)
+        pairs.extend(pair_list[cond].tolist())
+        dists.extend(dist[cond].tolist())
+        dxdys.extend(dxdy[cond].tolist())
 
     pairs = np.asarray(pairs, dtype=np.int32)
     dxdys = np.asarray(dxdys, dtype=np.float32)
@@ -360,44 +360,9 @@ def create_supernode_level(node_path,
 
     # Create a new column to show which layer of sns these are.
     sn2_edges['SN'] = [supernode] * len(sn2_edges)
-    # This section is tto create pairs between the supernodes themselves.
-    # The pairs are between nodes that are directly vertically or horizontally
-    # adjacent (2*previous sn layer distances).
-    pairs = []
-    dists = []
-    dxdys = []
-    for i in range(len(keep_new_sns)):
-        for j in range(len(keep_new_sns)):
-            xy1 = keep_new_sns[i]
-            xy2 = keep_new_sns[j]
-            dist = np.linalg.norm(xy1 - xy2)
-            if dist == 2 * node_separation:
-                pairs.append([len(node) + i, len(node) + j])
-                dists.append(dist)
-                dxdys.append(np.absolute(np.subtract(xy1, xy2)).tolist())
 
-    # One problem was that the tissue was so small that there were no two
-    # adjacent supernodes in this layer
-    # So we needed to account for that here.
-    if len(pairs) != 0:
-        pairs = np.asarray(pairs, dtype=np.int32)
-        dxdys = np.asarray(dxdys, dtype=np.float32)
-        dists = np.asarray(dists, dtype=np.float32)
-        dists = dists.reshape((len(dists), 1))
-
-        sn2_self_edges = pd.DataFrame({'source': pairs[:, 0],
-                                       'target': pairs[:, 1],
-                                       'dx': dxdys[:, 0],
-                                       'dy': dxdys[:, 1],
-                                       'D': dists[:, 0]})
-
-        sn2_self_edges['SN'] = [supernode] * len(sn2_self_edges)
-        total_edges = pd.concat([edge, sn2_edges, sn2_self_edges])
-        total_edges.index = range(len(total_edges))
-
-    else:
-        total_edges = pd.concat([edge, sn2_edges])
-        total_edges.index = range(len(total_edges))
+    total_edges = pd.concat([edge, sn2_edges])
+    total_edges.index = range(len(total_edges))
 
     sn_df = pd.DataFrame(columns=node.columns)
     # For each new sn, it gets all of the nodes that it's connected to
@@ -437,13 +402,5 @@ def create_supernode_level(node_path,
     sn_df['SN'] = [2] * len(sn_df)
     sn_df.index = range(len(node), len(node) + len(sn_df))
     total_nodes = pd.concat([node, sn_df])
-
-    if outline:
-        date = get_formatted_date()
-        total_edges.to_csv(f"{output_edge_dir}{tma}_{tissue}_{date}_sn1_edges.csv", index=False)
-        total_nodes.to_csv(f"{output_node_dir}{tma}_{tissue}_{date}_sn1_nodes.csv", index=False)
-    else:
-        total_edges.to_csv(output_edge_dir)
-        total_nodes.to_csv(output_node_dir)
 
     return total_nodes, total_edges

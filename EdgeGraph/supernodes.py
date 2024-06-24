@@ -290,7 +290,7 @@ def create_supernode_level(node_path,
     """
 
     # Import the node data containing the previous supernode data.
-    node = pd.read_csv(node_path, low_memory=False)
+    node = pd.read_csv(node_path)
     # Import edge data containing the previous supernode data.
     edge = pd.read_csv(edge_path)
 
@@ -399,7 +399,7 @@ def create_supernode_level(node_path,
 
         sn_df = sn_df.append(attr, ignore_index=True)
 
-    sn_df['SN'] = [2] * len(sn_df)
+    sn_df['SN'] = [supernode] * len(sn_df)
     sn_df.index = range(len(node), len(node) + len(sn_df))
     total_nodes = pd.concat([node, sn_df])
 

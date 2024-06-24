@@ -4,10 +4,6 @@ import pandas as pd
 from glob import glob
 
 
-
-
-
-
 def get_formatted_date() -> str:
     """ When called this method will return the date in
     the format of ddmmyyyy

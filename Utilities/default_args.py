@@ -72,7 +72,7 @@ def get_params(path):
                   "EPOCHS": default_int(params, "EPOCHS", 1000),
                   "SAVE_EPOCHS": default_int(params, "SAVE_EPOCHS", 100),
                   "NORMALISE_CM": default_true(params, "NORMALISE_CM"),
-                  "LAYOUT": default_str(params, "LAYOUT", "regular"),
+                  "LAYOUT": default_str(params, "LAYOUT", "square"),
                   "SEPARATION": default_int(params, "SEPARATION", 140),
                   "RADIUS": default_int(params, "RADIUS", 1),
                   "XPX_COL": default_str(params, "XPX_COL", "X(px)"),

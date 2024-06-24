@@ -37,13 +37,15 @@ print('Got default params.')
 out_node_dir = os.path.join(params["SN0"], "NodeFiles")
 out_edge_dir = os.path.join(params["SN0"], "EdgeFiles")
 
-if isdir(params["SN0"]):
-    if not isdir(out_node_dir):
-        os.mkdir(out_node_dir)
-        print(f'Made directory {out_node_dir}')
-    if not os.path.join(out_edge_dir):
-        os.mkdir(out_edge_dir)
-        print(f'Made directory {out_edge_dir}')
+if not isdir(params["SN0"]):
+    os.mkdir(params["SN0"])
+    print(f'Made directory {params["SN0"]}')
+if not isdir(out_node_dir):
+    os.mkdir(out_node_dir)
+    print(f'Made directory {out_node_dir}')
+if not os.path.join(out_edge_dir):
+    os.mkdir(out_edge_dir)
+    print(f'Made directory {out_edge_dir}')
 
 # ----------------------------------------------- Create graphs ------------------------------------------------------
 

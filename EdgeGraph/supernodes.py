@@ -5,33 +5,93 @@ from EdgeGraph.graph import get_core_outlines
 from EdgeGraph.utils import *
 
 
+def square_grid(x_range,
+                y_range,
+                sep):
+    """
+    Given an x and y range along with an edge length, this will return a set of coordinates that lay on the vertices
+    of a square grid in this range.
+    :param x_range: The minimum and maximum x coordinates.
+    :type x_range: list
+    :param y_range: The minimum and maximum x coordinates.
+    :type y_range: range
+    :param sep: The edge length.
+    :type sep: int
+    :return: vertex coordinates.
+    """
+
+    # Define the number of horizontal supernodes.
+    h_dots = int(abs((x_range[0] - x_range[1])) // sep)
+    # Define the number of vertical supernodes.
+    v_dots = int(abs((y_range[0] - y_range[1])) // sep)
+
+    # A list of the supernode coordinates.
+    locs = []
+    # We want to include the limit so we iterate to the number of horizontal supernodes +1
+    for h in range(h_dots + 1):
+        for v in range(v_dots + 1):
+            # The coordinates are the bottom left corner coordinates + (the separation * index of supernode)
+            locs.append([(h * sep) + min(x_range), (v * sep) + min(y_range)])
+    return np.asarray(locs)
+
+
+def tri_grid(x_range,
+             y_range,
+             sep):
+    """
+    Given an x and y range along with an edge length, this will return a set of coordinates that lay on the vertices
+    of an equilateral triangular grid in this range.
+    :param x_range: The minimum and maximum x coordinates.
+    :type x_range: list
+    :param y_range: The minimum and maximum x coordinates.
+    :type y_range: range
+    :param sep: The edge length.
+    :type sep: int
+    :return: vertex coordinates.
+    """
+
+    # Define the number of horizontal supernodes.
+    h_dots = int(abs((x_range[0] - x_range[1])) // sep)
+    # Define the number of vertical supernodes.
+    v_dots = int(abs((y_range[0] - y_range[1])) // (0.866*sep))
+
+    # A list of the supernode coordinates.
+    locs = []
+    # We want to include the limit so we iterate to the number of horizontal supernodes +1
+    for h in range(h_dots + 1):
+        for v in range(v_dots + 1):
+            if v % 2 == 0:
+                locs.append([min(x_range) + (h * sep), min(y_range) + (0.866 * v * sep)])
+            else:
+                locs.append([min(x_range) + (sep * (0.5 + h)), min(y_range) + (0.866 * v * sep)])
+    return np.asarray(locs)
+
+
 def create_level1_supernodes(node_path,
                              edge_path,
-                             output_node_dir,
-                             output_edge_dir,
-                             separation=200,
-                             outline=True,
-                             save=True,
+                             outline=None,
+                             sep=200,
+                             grid_type='square',
+                             radius_f=1,
                              ):
     """ This method takes the cell graph and then creates regularly spaced nodes
     that lay on the vertices of a square grid of with side length specified by the
     'separation' argument.
     There are a lot of scenarios to account for so this code is a little messy.
+    Also the separation is specified in um.
+
     :param node_path: The path to the csv file containing the nodes.
     :type node_path: str
     :param edge_path: The path to the edge file containing the connections.
     :type edge_path: str
-    :param output_node_dir: The directory to save the csv containing the nodes with supernodes.
-    :type output_node_dir: str
-    :param output_edge_dir: The directory to save the csv containing the edges with supernodes.
-    :type output_edge_dir: str
-    :param separation: The distance between adjacent supernodes in um. (default :obj:`200`)
-    :type separation: positive int
+    :param sep: The distance between adjacent supernodes in um. (default :obj:`200`)
+    :type sep: positive int
     :param outline: If there is an xml outline for the file for the tissue then use that. If False, then a square
         outline will be produced using the maxima and minima of the cell locations. (default :obj:`True`)
-    :type outline: bool
-    :param save: Decide if the edge and node files should be saved or not. (default :obj:`True`)
-    :type save: bool
+    :type outline: None
+    :param grid_type: If you want the supernodes to be laid out in a square grid or an equilateral triangular grid.
+        ('square', 'tri'). (default :obj:`square`)
+    :type grid_type: str
     :return:
     """
 
@@ -40,25 +100,19 @@ def create_level1_supernodes(node_path,
     # Import csv containing edges and edge features.
     edges = pd.read_csv(edge_path)
 
-    # Get the scale factor between pixel value and um
-    x_sf = np.mean(nodes['X(px)']) / np.mean(nodes['X(um)'])
-    # There could be a difference between x and y transformation but there shouldn't be.
-    y_sf = np.mean(nodes['Y(px)']) / np.mean(nodes['Y(um)'])
-    # Get the tma id and the tissue names
-    if outline:
-        # Retrieve the tma and tissue numbers.
-        # tma, tissue = get_tma_and_tissue(node_path)
-        # outlines, names = get_core_outlines(tma, x_sf, y_sf)
-        # # retrieve the specific core outline for the specified tissue
-        # outline = outlines[names.index(tissue)]
-        poly, _ = get_core_outlines(outline, x_sf, y_sf)
-        outline = poly[0]
+    x_sf, y_sf = calculate_sf(nodes,
+                              numerator='px',
+                              denominator='um')
+
+    if outline is not None:
+        outline = outline
 
     else:
-        xs = nodes['X(um)'].min()
-        xe = nodes['X(um)'].max()
-        ys = nodes['Y(um)'].min()
-        ye = nodes['Y(um)'].max()
+        tissue_id = get_id(node_path)
+        xs = nodes[f'X(um)'].min()
+        xe = nodes[f'X(um)'].max()
+        ys = nodes[f'Y(um)'].min()
+        ye = nodes[f'Y(um)'].max()
         outline = g.Polygon(np.asarray([[xs, ys],
                                         [xs, ye],
                                         [xe, ye],
@@ -66,24 +120,21 @@ def create_level1_supernodes(node_path,
 
     # We want to define a box around the tissue to create the supernodes in.
     # So the minimum and maximum supernode positions will be at these point.
-    x_min = round_to(min(outline.exterior.xy[0]), 500)
-    x_max = round_to(max(outline.exterior.xy[0]), 500)
-    y_min = round_to(min(outline.exterior.xy[1]), 500)
-    y_max = round_to(max(outline.exterior.xy[1]), 500)
+    x_min = round_to(min(outline.exterior.xy[0]), int(2*sep))
+    x_max = round_to(max(outline.exterior.xy[0]), int(2*sep))
+    y_min = round_to(min(outline.exterior.xy[1]), int(2*sep))
+    y_max = round_to(max(outline.exterior.xy[1]), int(2*sep))
 
     # Define the number of horizontal supernodes.
-    h_dots = int((x_max - x_min) // separation)
+    h_dots = int((x_max - x_min) // sep)
     # Define the number of vertical supernodes.
-    v_dots = int((y_max - y_min) // separation)
+    v_dots = int((y_max - y_min) // sep)
 
     # A list of the supernode coordinates.
-    sn1_locs = []
-    # We want to include the limit so we iterate to the number of horizontal supernodes +1
-    for h in range(h_dots + 1):
-        for v in range(v_dots + 1):
-            # The coordinates are the bottom left corner coordinates + (the separation * index of supernode)
-            sn1_locs.append([(h*separation) + x_min, (v*separation) + y_min])
-    sn1_locs = np.asarray(sn1_locs)
+    if grid_type == 'square':
+        sn1_locs = square_grid([x_min, x_max], [y_min, y_max], sep)
+    else:
+        sn1_locs = tri_grid([x_min, x_max], [y_min, y_max], sep)
 
     # This list will collect the supernodes that lie within the core outline.
     keep_id = []
@@ -95,43 +146,41 @@ def create_level1_supernodes(node_path,
     # Now we have the locations of the supernodes and now we need to form the connections with the cell nodes.
     # When we make these connections we want calculate the edge features as well.
 
+    time1 = time.time()
     # Collect the index of the supernode and the cell it's connected to.
     pairs = []
     # Collect the distances between the supernode and cell.
     dists = []
     # Get the x and y distances between the supernode and cell.
     dxdys = []
+    keep_keep = []
+    counter = 0
     # Iterate through length of the total kept supernodes.
-    for i in tqdm(range(len(sn1_locs_kept))):
+    for i, sn in tqdm(enumerate(sn1_locs_kept)):
         # Collect the cells that are within a square box centered on the supernode
         # with width and height  = 2* separation
-        temp_df = nodes[nodes['X(um)'] <= sn1_locs_kept[i][0] + separation]
-        temp_df = temp_df[temp_df['X(um)'] >= sn1_locs_kept[i][0] - separation]
-        temp_df = temp_df[temp_df['Y(um)'] <= sn1_locs_kept[i][1] + separation]
-        temp_df = temp_df[temp_df['Y(um)'] >= sn1_locs_kept[i][1] - separation]
+        x, y = sn[0], sn[1]
+        # Confine the surrounding cells within a given radius.
+        cond = (nodes['X(um)'] <= x+(sep * radius_f)) & (nodes['X(um)'] >= x-(sep * radius_f)) & \
+               (nodes['Y(um)'] <= y+(sep * radius_f)) & (nodes['Y(um)'] >= y-(sep * radius_f))
 
-        counter = 0
-        # Iterate through the indices of the remaining cell detections.
-        for idx in temp_df.index.tolist():
-            # Retrieve the xy coordinates of the cell detection
-            xy = np.asarray(temp_df[['X(um)', 'Y(um)']].loc[idx])
-            # Calculate the Euclidean distance between the supernode and the cell.
-            dist = np.linalg.norm(sn1_locs_kept[i] - xy)
-            # If the distance is less than the threshold separation then append the cells information.
-            if dist <= separation:
-                counter += 1
-                # This pair is the index of the supernode (starting from where the cell
-                # detections end) along with the index of the cell.
-                pairs.append([i + len(nodes), idx])
-                # Append Euclidean Distance
-                dists.append(dist)
-                # Append the x and y differences.
-                dxdys.append(np.absolute(np.subtract(sn1_locs_kept[i], xy)).tolist())
-        if counter == 0:
-            pairs.append([i+len(nodes), i + len(nodes)])
-            dists.append(0)
-            dxdys.append([0, 0])
+        sn1s_df = nodes[cond][['X(um)', 'Y(um)']]
+        sn1s = np.asarray(sn1s_df)
 
+        dist = np.linalg.norm(sn - sn1s, axis=1, keepdims=False)
+
+        dxdy = np.absolute(np.subtract(sn, sn1s))
+        pair_list = np.array([[counter + len(nodes)] * len(sn1s_df), sn1s_df.index.tolist()]).T
+        dist_cond = (dist <= (sep*radius_f))
+        if dist_cond.sum() > 0:
+            dists.extend(dist[dist_cond].tolist())
+            dxdys.extend(dxdy[dist_cond].tolist())
+            pairs.extend(pair_list[dist_cond].tolist())
+            keep_keep.append(i)
+            counter += 1
+
+    sn1_locs_kept = sn1_locs_kept[keep_keep]
+    print(f'\tRemoved outliers ({time.time() - time1 :.5f} s)')
     # Make sure that the pairs are all integers
     pairs = np.asarray(pairs, dtype=np.int32)
     # Convert the distances to numpy arrays
@@ -147,6 +196,7 @@ def create_level1_supernodes(node_path,
                               'dy': dxdys[:, 1],
                               'D': dists[:, 0]})
 
+    time2 = time.time()
     # So we have the connections with the cell nodes. Now we want to calculate the mean for
     # each of the connections and store these as the features for the supernodes.
     # Create a new dataframe for the data
@@ -186,77 +236,22 @@ def create_level1_supernodes(node_path,
         sn_df = sn_df.append(attr, ignore_index=True)
     # Change the indices to iterate from the max of the cell detections to the number of supernodes.
     sn_df.index = range(len(nodes), len(nodes) + len(sn_df))
-
-    # So we have already done this with the cell detections but we need to
-    # connect the supernodes to the vertically and horizontally adjacent supernodes.
-    pairs = []
-    dists = []
-    dxdys = []
-    for i in range(len(sn1_locs_kept)):
-        for j in range(len(sn1_locs_kept)):
-            xy = sn1_locs_kept[j]
-            dist = np.linalg.norm(sn1_locs_kept[i] - xy)
-            # Because of all the moving around of numbers I added a buffer to
-            # make sure that it gets the neighbour nodes.
-            if 10 < dist <= separation + 10:
-                pairs.append([i + len(nodes), j + len(nodes)])
-                dists.append(dist)
-                dxdys.append(np.absolute(np.subtract(sn1_locs_kept[i], xy)).tolist())
-
-    pairs = np.asarray(pairs, dtype=np.int32)
-    dxdys = np.asarray(dxdys, dtype=np.float32)
-    dists = np.asarray(dists, dtype=np.float32)
-    dists = dists.reshape((len(dists), 1))
-
-    sn_edges = pd.DataFrame({'source': pairs[:, 0],
-                             'target': pairs[:, 1],
-                             'dx': dxdys[:, 0],
-                             'dy': dxdys[:, 1],
-                             'D': dists[:, 0]})
-
-    # Here we need to create a loop that retrieves the sns that weren't connected to any
-    # cells, find the connections to other supernodes and then take the means from them.
-    # For each of the unique supernodes collect all pairs for that supernode
-    for sn in sn1_edges['source'].unique().tolist():
-        temp_df = sn1_edges[sn1_edges['source'] == sn]
-        if len(temp_df) == 1 and temp_df['target'].iloc[0] == sn:
-            # This time we're getting info from the connections only between supernodes.
-            temp_df2 = sn_edges[sn_edges['source'] == sn]
-            temp_df2 = sn_df.loc[temp_df2['target']]
-
-            if len(temp_df2) == 0:
-                sn_df.loc[sn:sn, 'Type'] = sn_df['Type'].mode()[0]
-                for column in sn_df.columns:
-                    if column not in attr:
-                        sn_df.loc[sn:sn, column] = 0
-            else:
-                sn_df.loc[sn:sn, 'Type'] = temp_df2['Type'].value_counts().keys()[0]
-                # For the attributes that don't need to be specified we can just calculate the mean.
-                for column in sn_df.columns:
-                    if column not in attr:
-                        sn_df.loc[sn:sn, column] = np.mean(temp_df2[column])
+    print(f'\tGot supernode connections in ({time.time() - time2 :.5f} s)')
 
     # We now define which nodes are supernodes and which are cells. This is so we can easily filter them later.
     sn_df['SN'] = [1] * len(sn_df)
     sn1_edges['SN'] = [1] * len(sn1_edges)
-    sn_edges['SN'] = [1] * len(sn_edges)
+    # sn_edges['SN'] = [1] * len(sn_edges)
     edges['SN'] = [0] * len(edges)
     nodes['SN'] = [0] * len(nodes)
 
     # Concatenate the cell and supernode data.
     total_nodes = pd.concat([nodes, sn_df])
     # concatenate cell edges and supernode connections.
-    total_edges = pd.concat([edges, sn1_edges, sn_edges])
+    # total_edges = pd.concat([edges, sn1_edges, sn_edges])
+    total_edges = pd.concat([edges, sn1_edges])
     # The indices for the detections was previously specified so only need to change edge file.
     total_edges.index = range(len(total_edges))
-
-    if save:
-        total_edges.to_csv(output_edge_dir, index=False)
-        total_nodes.to_csv(output_node_dir, index=False)
-        #
-        # date = get_formatted_date()
-        # total_edges.to_csv(f"{output_edge_dir}{tma}_{tissue}_{date}_sn1_edges", index=False)
-        # total_nodes.to_csv(f"{output_node_dir}{tma}_{tissue}_{date}_sn1_nodes", index=False)
 
     return total_nodes, total_edges
 

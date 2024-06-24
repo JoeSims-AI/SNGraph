@@ -5,6 +5,8 @@
     This code is an example of creating a maximum of 2 sets of supernodes but could be used indefinitely to create as
     many sequential layers as you could ever want depending on what parameters you specify.
 
+    python make_sn2s.py <param_file_location>
+
     This will introduce a new directory for the hierarchical graphs. So the project will now look like:
 
     ├── Project

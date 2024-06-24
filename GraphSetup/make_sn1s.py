@@ -2,6 +2,8 @@
     This method takes the node and edge files from the cell graph and then given a set of arguments, creates the
     first set of supernodes (SNs) connected hierarchically with the cell graph.
 
+    python make_sn1s.py <param_file_path>
+
     This will introduce a new directory for the hierarchical graphs. So the project will now look like:
 
     ├── Project

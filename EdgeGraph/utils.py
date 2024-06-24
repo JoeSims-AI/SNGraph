@@ -4,6 +4,10 @@ import pandas as pd
 from glob import glob
 
 
+
+
+
+
 def get_formatted_date() -> str:
     """ When called this method will return the date in
     the format of ddmmyyyy
@@ -68,32 +72,6 @@ def order_files(node_dir,
             f"n_edge_files = {(len(ordered_edge_files))}")
 
     return node_files, ordered_edge_files
-
-
-def get_args(path) -> dict:
-    """
-    Given the path of a text file, this method retrieves parameters and puts them into a dictionary format.
-
-    :param path: The path to the txt file.
-    :type path: str
-    :return params:
-    """
-
-    # Open the .txt file.
-    f = open(path, 'r')
-    lines = f.readlines()
-
-    # Remove new line token
-    lines = [line.strip('\n') for line in lines]
-
-    # Collect parameters in a dictionary.
-    params = {}
-    for line in lines:
-        line_split = line.split(" ")
-        # If there is a list specified, then we need to convert it from a long string to a list.
-        params[line_split[0]] = line_split[1] if len(line_split) == 2 else [line.strip(',') for line in line_split[1:]]
-
-    return params
 
 
 def round_to(input_value,

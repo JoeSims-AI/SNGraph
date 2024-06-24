@@ -243,21 +243,28 @@ def create_kdtree_edges(file_path,
 
 
 def delaunay_edges(file_path,
-                   save=None
+                   x_col,
+                   y_col,
+                   threshold=None,
+                   return_node_df=True
                    ):
     """
     This method uses Delaunay triangulation to form the graph edges.
     It also returns the edge lengths as the edge features.
     :param file_path: This can be a path to the csv file or a pandas dataframe.
-    :param save: If this is not None then it should be a string which states the directory
-        to save the file to.
+    :type file_path: str
+    :param x_col: This the name of the column containing the x coordinates of the cell nodes.
+    :param y_col:This the name of the column containing the y coordinates of the cell nodes.
+    :param threshold: A distance threshold if specified.
+    :param return_node_df:
     :return: Edges
     """
-    coords = np.asarray(pd.read_csv(file_path)[['X(um)', 'Y(um)']])
+    nodes_df = pd.read_csv(file_path)
+    coords = np.asarray(nodes_df[[x_col, y_col]])
 
     # First get the Delaunay triangles.
     tri = Delaunay(coords)
-    tris = tri.simplices
+    tris = delaunay_with_threshold(tri, coords, threshold)
 
     # Now we want to create a list of all possible pairs and remove any repeating ones.
     pairs = np.concatenate((tris[:, [0, 1]], tris[:, [0, 2]], tris[:, [1, 2]]))
@@ -273,37 +280,28 @@ def delaunay_edges(file_path,
                              'dx': dxdys[:, 0],
                              'dy': dxdys[:, 1]
                              })
-
-    if save is not None:
-        identity = get_id(file_path)
-        output_path = f"{save}{identity}.csv"
-        edges_df.to_csv(output_path, index=False)
-        print(f'Saved {identity}. Shape {edges_df.shape}')
-
-    return edges_df
+    if return_node_df:
+        return nodes_df, edges_df
+    else:
+        return edges_df
 
 
-def delaunay_with_threshold(node_file,
-                            threshold=None):
+def delaunay_with_threshold(delaunay_tri,
+                            coords,
+                            threshold):
     """
-    This method takes the coordinates of the nodes, applies Delaunay triangulation,
-    then removes any triangles with edges longer than the threshold. If no threshold is
+    This method removes any triangles with edges longer than the threshold. If no threshold is
     specified then it will just return the Delaunay triangles.
-    :param node_file: The file containing the node's coordinates in um.
-    :param node_file: pd.DataFrame
+    :param delaunay_tri:
+    :param coords: The x and y coordinates of the nodes
     :param threshold: The threshold to determine the triangles to keep. (default :obj `None`)
     :type threshold: float/int
     :return:
     """
 
-    node_file = node_file[node_file['SN'] == 0]
-    coords = np.asarray(node_file[['X(um)', 'Y(um)']])
-
-    tri = Delaunay(coords)
-
     if threshold is not None:
         # Get the vertices (node indices).
-        verts = tri.vertices
+        verts = delaunay_tri.vertices
         # Determine a mask for the triangles containing edges less than the threshold.
         mask = np.zeros_like(verts)
         # Calculate the length of each edge in the triangle and then store it in mask.
@@ -314,9 +312,9 @@ def delaunay_with_threshold(node_file,
         mask = mask < threshold
         # Below only returns true if all 3 entries are below the threshold (False).
         mask = mask.all(axis=1)
-        return tri.simplices[mask, :]
+        return delaunay_tri.simplices[mask, :]
     else:
-        return tri.simplices
+        return delaunay_tri.simplices
 
 
 def get_delaunay_from_edges(node_file,

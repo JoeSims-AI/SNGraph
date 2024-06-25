@@ -30,10 +30,7 @@ def graph_object(node_path,
                  out_features,
                  out_column,
                  sn=0,
-                 test=0,
                  threshold=None,
-                 y=True,
-                 bin=False
                  ):
     """
     A method for loading the node and edge csv data for one TMA core into a torch_geometric graph format.
@@ -53,17 +50,10 @@ def graph_object(node_path,
     :param sn: The level of nodes to include when making the graph. This will affect the
             the edges that are created and the nodes that are included. (default :obj:`0`)
     :type sn: int
-    :param test: test defines the proportion of the nodes to be tested on in cross validation.
-    :type test: float
     :param threshold: If this is specified then only edges below this threshold will be used and
         any edges with longer lengths will be removed. It is recommended to use a size that is
         greater than the supernode connection lengths. (default :obj: `None`)
     :type threshold: float
-    :param y: If y is true then output variables will be determined. Otherwise there will
-        be no output variables. (default :obj:`True`)
-    :type y: bool
-    :param bin: If bin is true and y is not None then the output y will be a graph level output.
-    :param bin: bool
     :return: Graph data object.
     """
 

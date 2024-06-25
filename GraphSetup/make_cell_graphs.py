@@ -61,7 +61,6 @@ for i, filename in enumerate(node_filenames):
     node_df, edge_df = delaunay_edges(in_node_path,
                                       params["X_COL"],
                                       params["Y_COL"],
-                                      params["THRESHOLD"],
                                       True)
 
     node_df.to_csv(out_node_path, index=False)

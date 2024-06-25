@@ -245,7 +245,6 @@ def create_kdtree_edges(file_path,
 def delaunay_edges(file_path,
                    x_col,
                    y_col,
-                   threshold=None,
                    return_node_df=True
                    ):
     """
@@ -255,7 +254,6 @@ def delaunay_edges(file_path,
     :type file_path: str
     :param x_col: This the name of the column containing the x coordinates of the cell nodes.
     :param y_col:This the name of the column containing the y coordinates of the cell nodes.
-    :param threshold: A distance threshold if specified.
     :param return_node_df:
     :return: Edges
     """
@@ -264,7 +262,7 @@ def delaunay_edges(file_path,
 
     # First get the Delaunay triangles.
     tri = Delaunay(coords)
-    tris = delaunay_with_threshold(tri, coords, threshold)
+    tris = tri.simplices
 
     # Now we want to create a list of all possible pairs and remove any repeating ones.
     pairs = np.concatenate((tris[:, [0, 1]], tris[:, [0, 2]], tris[:, [1, 2]]))

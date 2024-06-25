@@ -30,7 +30,7 @@ below. The last column ('sn') will also specify which level the nodes are in the
 It applies Delaunay triangulation to the locations of the cells and creates a file containing edges with
 specific attributes such as distance in micrometers. Below is an example.
 
-| source  | target | D(mu) |
+| source  | target | distance |
 | :-----  | :----- | :---- | 
 | 0       | 1      | 32.56 |
 | 0       | 15     | 26.12 |

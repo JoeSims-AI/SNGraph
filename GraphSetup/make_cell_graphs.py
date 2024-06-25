@@ -14,7 +14,6 @@
     │   │   │   ├── EdgeFiles
     │   │   │   │    ├── file0.csv
 
-    Joe 25/04/2024
 """
 
 

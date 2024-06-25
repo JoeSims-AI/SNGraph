@@ -100,7 +100,7 @@ if len(node_files) == 0 or len(edge_files) == 0:
     raise Exception(f"Directory empty. Nodes = {len(node_files)}, Edges = {len(edge_files)}")
 
 # Load the train-test split information.
-train_test = pd.read_csv(params["TRAIN_TEST_FILE"])
+train_test = pd.read_csv(params["CV_PATH"])
 train_test['id'].astype(str)
 if train_test['id'].dtype is not str:
     train_test['id'] = train_test['id'].astype(str)

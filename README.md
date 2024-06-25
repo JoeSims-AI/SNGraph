@@ -219,8 +219,8 @@ in these scripts.
 Below is a table with descriptions of the parameters that are used by the codes throughout this experiment.
 
 
-| Parameter Name      | Default                 | Desceiption                                              |
-| :-----              | :-----                  | :----                                                    | 
+| Parameter Name      | Default                 | Description                                              |
+| -----              | -----                  | ----                                                    | 
 | ATT_FEATURES        | 8                       | The number nodes in in the pooling of the attention network.
 | BATCH_SIZE          | 4                       | The number of graphs in a batch.
 | CV_PATH             | -                       | The path to the cross validation file containing information about which graphs are in which split. This file will contain one column called 'id' which will contain the name of node and edge files. There will be a column for each of the folds that will specify 'train', 'val' or 'test'. |

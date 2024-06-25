@@ -6,7 +6,7 @@ import shapely.geometry as g
 from scipy import interpolate
 from scipy.spatial import Delaunay
 import itertools
-from EdgeGraph.utils import *
+from SNGraph.utils import *
 from collections import Counter
 
 

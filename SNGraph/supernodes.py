@@ -1,8 +1,8 @@
 from tqdm import tqdm
 import numpy as np
 import shapely.geometry as g
-from EdgeGraph.graph import get_core_outlines
-from EdgeGraph.utils import *
+from SNGraph.graph import get_core_outlines
+from SNGraph.utils import *
 
 
 def square_grid(x_range,

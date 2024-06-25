@@ -22,7 +22,7 @@ import os
 from os.path import isdir
 import sys
 
-from EdgeGraph.supernodes import create_level1_supernodes
+from SNGraph.supernodes import create_level1_supernodes
 from Utilities.default_args import get_params
 
 # ------------------------------------------- Load project parameters ------------------------------------------------

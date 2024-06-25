@@ -29,11 +29,11 @@ import numpy as np
 from torch_geometric.loader import DataLoader
 
 from Utilities.default_args import get_params
-from EdgeGraph.utils import order_files, get_id
-from EdgeGraph.data import graph_object, Sampler_custom
-from EdgeGraph.models import GraphAttSurv
-from EdgeGraph.loss import weighted_mean_squared_error
-from EdgeGraph.eval import cox_loss_sorted, calculate_cindex
+from SNGraph.utils import order_files, get_id
+from SNGraph.data import graph_object, Sampler_custom
+from SNGraph.models import GraphAttSurv
+from SNGraph.loss import weighted_mean_squared_error
+from SNGraph.eval import cox_loss_sorted, calculate_cindex
 
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')

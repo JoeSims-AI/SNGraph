@@ -1,4 +1,4 @@
-from EdgeGraph.EdgeGAT import Edge_GATConv
+from SNGraph.EdgeGAT import Edge_GATConv
 import torch.nn as nn
 import torch
 import torch_geometric.utils as tgu

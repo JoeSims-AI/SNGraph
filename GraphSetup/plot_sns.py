@@ -12,7 +12,7 @@ import os
 from os.path import isdir
 import sys
 
-from EdgeGraph.plot import plot_nodes_with_labels, plot_node_connections_id
+from SNGraph.plot import plot_nodes_with_labels, plot_node_connections_id
 from Utilities.default_args import get_params
 
 # ------------------------------------------- Load project parameters ------------------------------------------------

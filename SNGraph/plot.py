@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 import pandas as pd
 
-from EdgeGraph.graph import get_node_connections
+from SNGraph.graph import get_node_connections
 
 
 def plot_nodes_with_labels(node_dataframe,

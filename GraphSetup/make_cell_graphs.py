@@ -23,7 +23,7 @@ import os
 from os.path import isdir
 import sys
 
-from EdgeGraph.graph import delaunay_edges
+from SNGraph.graph import delaunay_edges
 from Utilities.default_args import get_params
 
 # ------------------------------------------- Load project parameters ------------------------------------------------

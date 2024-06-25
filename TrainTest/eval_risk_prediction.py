@@ -27,10 +27,10 @@ import numpy as np
 from torch_geometric.loader import DataLoader
 
 from Utilities.default_args import get_params
-from EdgeGraph.utils import order_files, get_id
-from EdgeGraph.data import graph_object
-from EdgeGraph.models import GraphAttSurv
-from EdgeGraph.eval import calculate_cindex, mean_acc
+from SNGraph.utils import order_files, get_id
+from SNGraph.data import graph_object
+from SNGraph.models import GraphAttSurv
+from SNGraph.eval import calculate_cindex, mean_acc
 
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')

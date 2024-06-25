@@ -88,7 +88,9 @@ set of directories. The project environment will now appear as below.
 
 This script will take the location of the cells and previous set of SNs and
 create another set of hierarchically connected nodes. 
-The output of this process is visualised below. 
+The output of this process is visualised below. The hierarchical edges are formed between 
+red nodes in adjacent layers. So the red L2 supernode is connected to the red L1 supernodes, 
+which are connected to the red cell nodes.
 
 ![](Images/SN2_connnections.png)
 

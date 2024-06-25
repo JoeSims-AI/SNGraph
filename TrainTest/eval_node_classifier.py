@@ -332,12 +332,14 @@ print(val_ba)
 print(test_ba)
 
 acc_file = open(acc_filename, 'a')
+divider = '-' * 53 + f'Means' + '-' * 53
+acc_file.write(divider)
 acc_file.write(train_a + '\n')
 acc_file.write(val_a + '\n')
 acc_file.write(test_a + '\n\n')
 acc_file.write(train_ba + '\n')
 acc_file.write(val_ba + '\n')
-acc_file.write(test_ba + '\n\n')
+acc_file.write(test_ba + '\n')
 acc_file.close()
 
 print('Evaluation complete.')

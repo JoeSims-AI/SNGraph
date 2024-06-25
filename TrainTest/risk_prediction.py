@@ -323,6 +323,8 @@ for epoch in range(params["EPOCHS"] + 1):
         logging.info(f'\tEpoch [{epoch + 1} / {params["EPOCHS"]}] : loss = []')
 
     if epoch % params["SAVE_EPOCHS"] == 0:
+        model.eval()
+
         train_c = calculate_cindex(model, trainLoader, device)
         val_c = calculate_cindex(model, valLoader, device)
 
@@ -341,6 +343,8 @@ for epoch in range(params["EPOCHS"] + 1):
 
         del train_c
         del val_c
+
+        model.train()
 
 logger.info('Complete!')
 

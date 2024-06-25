@@ -287,6 +287,9 @@ for epoch in range(1, params["EPOCHS"] + 1):
                 if sum_gt[i] > 0:
                     confusion[max_out[i]][max_gt[i]] = confusion[max_out[i]][max_gt[i]] + 1
 
+        if params["NORMALISE_CM"]:
+            confusion = confusion / confusion.sum()
+
         correct = np.trace(confusion)
         tot = np.sum(np.sum(confusion, axis=1), axis=0)
         prop_correct = correct / tot
@@ -317,6 +320,9 @@ for epoch in range(1, params["EPOCHS"] + 1):
             for i in range(0, output.shape[0]):
                 if sum_gt[i] > 0:
                     confusion[max_out[i]][max_gt[i]] = confusion[max_out[i]][max_gt[i]] + 1
+
+        if params["NORMALISE_CM"]:
+            confusion = confusion / confusion.sum()
 
         correct = np.trace(confusion)
         tot = np.sum(np.sum(confusion, axis=1), axis=0)

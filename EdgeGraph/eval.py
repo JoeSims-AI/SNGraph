@@ -86,6 +86,18 @@ def format_cm(cm,
     return cm_string
 
 
+def mean_acc(vals):
+    """
+        This returns the mean and standard error from values in a list.
+    :param vals:
+    :return:
+    """
+    vals = np.asarray(vals)
+    mean_a = vals.mean()
+    a_unc = np.std(vals) / np.sqrt(len(vals))
+    return mean_a, a_unc
+
+
 def calculate_cindex(model,
                      dataloader,
                      device='cpu'):

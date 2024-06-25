@@ -20,10 +20,8 @@
 # --------------------------------------------- Install packages -----------------------------------------------------
 
 import os
-from os.path import isfile, isdir
 import sys
 import torch
-import logging
 import pandas as pd
 import numpy as np
 from torch_geometric.loader import DataLoader
@@ -32,7 +30,6 @@ from Utilities.default_args import get_params
 from EdgeGraph.utils import order_files, get_id
 from EdgeGraph.data import graph_object
 from EdgeGraph.models import GraphConvMMP
-from EdgeGraph.loss import weighted_mean_squared_error
 from EdgeGraph.eval import balanced_acc, format_cm, mean_acc
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -76,7 +73,7 @@ print(f'Created {acc_filename}.')
 
 
 def get_folds(directory):
-    models = [m.split('_')[-2] for m in os.listdir(params["MODEL_DIR"])]
+    models = [m.split('_')[-2] for m in os.listdir(directory)]
     model_folds = max([int(f.replace('fold', '')) for f in list(set(models))])
     return model_folds
 

@@ -2,52 +2,7 @@ import torch
 import numpy as np
 import pandas as pd
 from sksurv.metrics import concordance_index_censored
-
-
-def calculate_cindex(model,
-                     dataloader,
-                     device='cpu'):
-    """
-    This method calculates the concordance index (c-index).
-    This method is applicable to censored data.
-    This method uses the relative hazard which is valid under the assumption that the output follows a
-    proportional hazards model.
-
-    :param model: The deep learning survival model.
-    :type model: torch_geometric.model
-    :param dataloader: The data loader containing the graphs to be evaluated.
-    :type dataloader: torch_geometric.loader.DataLoader
-    :param device: CUDA or CPU. (default :obj:`cpu`)
-    :type device: str
-    :return:
-    """
-
-    model = model.to(device)
-
-    # Run the model on all data to get outputs.
-    durations = []
-    events = []
-    y_preds = []
-    for batch in dataloader:
-        events.extend(batch.y[:, 0].tolist())
-        durations.extend(batch.y[:, 1].tolist())
-        batch = batch.to(device)
-        with torch.no_grad():
-            y_pred, _ = model(batch)
-
-        y_pred = y_pred.detach().squeeze().tolist()
-        if type(y_pred) == float:
-            y_pred = [y_pred]
-        y_preds.extend(y_pred)
-
-    grouping = pd.DataFrame({'status': events,
-                             'time': durations,
-                             'hazard': y_preds})
-
-    c_index, _, _, _, _ = concordance_index_censored(grouping['status'] == 1,  # needs to be boolean
-                                                     grouping['time'],
-                                                     grouping['hazard'])
-    return c_index
+from torch import Tensor
 
 
 def precision(cm) -> float:
@@ -129,3 +84,76 @@ def format_cm(cm,
         cm_string += '\n'
 
     return cm_string
+
+
+def calculate_cindex(model,
+                     dataloader,
+                     device='cpu'):
+    """
+    This method calculates the concordance index (c-index).
+    This method is applicable to censored data.
+    This method uses the relative hazard which is valid under the assumption that the output follows a
+    proportional hazards model.
+
+    :param model: The deep learning survival model.
+    :type model: torch_geometric.model
+    :param dataloader: The data loader containing the graphs to be evaluated.
+    :type dataloader: torch_geometric.loader.DataLoader
+    :param device: CUDA or CPU. (default :obj:`cpu`)
+    :type device: str
+    :return:
+    """
+
+    model = model.to(device)
+
+    # Run the model on all data to get outputs.
+    durations = []
+    events = []
+    y_preds = []
+    for batch in dataloader:
+        events.extend(batch.y[:, 0].tolist())
+        durations.extend(batch.y[:, 1].tolist())
+        batch = batch.to(device)
+        with torch.no_grad():
+            y_pred, _ = model(batch)
+
+        y_pred = y_pred.detach().squeeze().tolist()
+        if type(y_pred) == float:
+            y_pred = [y_pred]
+        y_preds.extend(y_pred)
+
+    grouping = pd.DataFrame({'status': events,
+                             'time': durations,
+                             'hazard': y_preds})
+
+    c_index, _, _, _, _ = concordance_index_censored(grouping['status'] == 1,  # needs to be boolean
+                                                     grouping['time'],
+                                                     grouping['hazard'])
+    return c_index
+
+
+def cox_loss_ph(h, events):
+    """
+        This function was acquired from pycox. https://github.com/havakv/pycox
+        Requires the input to be sorted by descending duration time.
+        See DatasetDurationSorted.
+        We calculate the negative log of $(\frac{h_i}{\sum_{j \in R_i} h_j})^d$,
+        where h = exp(log_h) are the hazards and R is the risk set, and d is event.
+        We just compute a cumulative sum, and not the true Risk sets. This is a
+        limitation, but simple and fast.
+        """
+    riskmax = torch.nn.functional.normalize(h, p=2, dim=0)
+    log_risk = torch.log((torch.cumsum(torch.exp(riskmax), dim=0)))
+    uncensored_l = torch.add(riskmax, -log_risk)
+    resize_censors = events.resize_(uncensored_l.size()[0], 1)
+    censored_likelihood = torch.mul(uncensored_l, resize_censors)
+    loss = -torch.sum(censored_likelihood) / float(events.nonzero().size(0))
+    return loss
+
+
+def cox_loss_sorted(h, events, durations):
+
+    idx = durations.sort(descending=True, dim=0)[1]
+    events = events[idx]
+    h = h[idx]
+    return cox_loss_ph(h, events)

@@ -76,9 +76,9 @@ logger.info(f"Device = {device}")
 
 # ----------------------------------- Set up additional parameters -----------------------------------------------------
 
-in_features = list(params["IN_FEATURES"])
-edge_features = list(params["EDGE_FEATURES"])
-out_features = list(params["OUT_FEATURES"])
+in_features = params["IN_FEATURES"]
+edge_features = params["EDGE_FEATURES"]
+out_features = params["OUT_FEATURES"]
 
 # ---------------------------------------------- Loading the Data ------------------------------------------------------
 
@@ -99,10 +99,12 @@ cm_filename = os.path.join(params["METRIC_DIR"], f'{params["name"]}_cm.txt')  # 
 if not isfile(loss_filename):
     loss_file = open(loss_filename, 'w+')
     loss_file.close()
+    logger.info(f'Created {loss_filename}.')
 
 if not isfile(cm_filename):
     cm_file = open(cm_filename, 'w+')
     cm_file.close()
+    logger.info(f'Created {cm_filename}.')
 
 # --------------------------------------------- Create Graphs ----------------------------------------------------------
 
@@ -121,6 +123,8 @@ for i, (node_file, edge_file) in enumerate(zip(node_files, edge_files)):
                                              out_column='class',
                                              sn=params["SN"],
                                              threshold=params["THRESHOLD"],
+                                             y=True,
+                                             bin_out=False,
                                              ))
         elif split_set == 'val':
             val_graphs.append(graph_object(node_path=node_file,
@@ -131,6 +135,8 @@ for i, (node_file, edge_file) in enumerate(zip(node_files, edge_files)):
                                            out_column='class',
                                            sn=params["SN"],
                                            threshold=params["THRESHOLD"],
+                                           y=True,
+                                           bin_out=False,
                                            ))
         else:
             continue

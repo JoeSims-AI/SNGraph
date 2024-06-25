@@ -68,6 +68,10 @@ def get_params(path):
                   "MODEL_DIR": join(project_dir, "Models"),
                   "EVAL_DIR": join(project_dir, "EvaluationFiles"),
                   "CV_PATH": params["CV_PATH"],
+                  "IN_FEATURES": list(params["IN_FEATURES"]),
+                  "EDGE_FEATURES": list(params["EDGE_FEATURES"]),
+                  "OUT_FEATURES": list(params["OUT_FEATURES"]),
+                  "ATT_FEATURES": default_int(params, "ATT_FEATURES", 8),
                   "OUTLINE_DIR": params["OUTLINE_DIR"],
                   "FOLD": default_int(params, "FOLD", 0),
                   "EPOCHS": default_int(params, "EPOCHS", 1000),
@@ -91,6 +95,14 @@ def get_params(path):
                   "NOISE_ATT": default_float(params, "NOISE_ATT", 1),
                   "NOISE_EDGES": default_float(params, "NOISE", 1),
                   "SHUFFLE": default_false(params, "SHUFFLE"),
-                  "THRESHOLD": default_float(params, "NOISE_CELLS", None)
+                  "THRESHOLD": default_float(params, "NOISE_CELLS", None),
+                  "EVENT_STAT": default_str(params["EVENT_STAT"]),
+                  "EVENT_DUR": default_str(params["EVENT_DUR"]),
+                  "EVENT_POS": default_str(params["EVENT_POS"]),
                   }
+
+    for k in params.keys():
+        if k not in param_dict:
+            param_dict[k] = params[k]
+
     return param_dict

@@ -1,8 +1,9 @@
 import numpy as np
 import pandas as pd
 import torch
+import copy
 from torch_geometric.data import Data
-from sklearn.model_selection import train_test_split
+from torch.utils.data.sampler import Sampler
 
 
 def one_hot_encoder(data,
@@ -27,10 +28,12 @@ def graph_object(node_path,
                  edge_path,
                  node_features,
                  edge_features,
-                 out_features,
-                 out_column,
+                 out_features=None,
+                 out_column=None,
                  sn=0,
                  threshold=None,
+                 y=None,
+                 bin_out=True,
                  ):
     """
     A method for loading the node and edge csv data for one TMA core into a torch_geometric graph format.
@@ -54,6 +57,12 @@ def graph_object(node_path,
         any edges with longer lengths will be removed. It is recommended to use a size that is
         greater than the supernode connection lengths. (default :obj: `None`)
     :type threshold: float
+    :param y: If y is true then output variables will be determined. Otherwise there will
+        be no output variables. (default :obj:`True`)
+    :type y: bool
+    :param bin_out: If bin is true and y is not None then the output y will be a graph level output.
+        (default :obj:`True`)
+    :param bin_out: bool
     :return: Graph data object.
     """
 
@@ -84,9 +93,6 @@ def graph_object(node_path,
         if edge_max > node_max:
             print(node_path, f'\nNodes = {node_max}, Edges = {edge_max}')
 
-    # Define the indices that correspond from the train-test split if training and testing on sub-graphs.
-    train_ids, test_ids = train_test_split(node_df, test_size=test)
-
     # The data need to be in a specific format in the graph.
     input_features = torch.tensor(np.array(node_df[node_features_copy]))
     input_edges = torch.tensor(np.array(edge_df[['source', 'target']]).transpose())
@@ -100,27 +106,65 @@ def graph_object(node_path,
     edge_attrib = edge_attrib.type(torch.FloatTensor)
 
     # Sometimes we don't want to specify an output.
-    if y and bin:
+    if y is not None and bin_out:
         target_features = torch.tensor(y)
         target_features = target_features.type(torch.FloatTensor)
         return Data(x=input_features,
                     y=target_features,
                     edge_index=input_edges,
-                    edge_attr=edge_attrib,
-                    train_mask=train_ids,
-                    test_mask=test_ids)
-    elif y and not bin:
+                    edge_attr=edge_attrib)
+
+    elif y is not None and not bin_out:
         target_features = torch.tensor(one_hot_encoder(node_df[out_column], out_features))
         return Data(x=input_features,
                     y=target_features,
                     edge_index=input_edges,
-                    edge_attr=edge_attrib,
-                    train_mask=train_ids,
-                    test_mask=test_ids)
+                    edge_attr=edge_attrib)
     else:
         return Data(x=input_features,
                     edge_index=input_edges,
-                    edge_attr=edge_attrib,
-                    train_mask=train_ids,
-                    test_mask=test_ids)
-    
+                    edge_attr=edge_attrib)
+
+
+class Sampler_custom(Sampler):
+
+    def __init__(self, event_list, censor_list, batch_size):
+        self.event_list = event_list
+        self.censor_list = censor_list
+        self.batch_size = batch_size
+
+    def __iter__(self):
+
+        train_batch_sampler = []
+        Event_idx = copy.deepcopy(self.event_list)
+        Censored_idx = copy.deepcopy(self.censor_list)
+        np.random.shuffle(Event_idx)
+        np.random.shuffle(Censored_idx)
+
+        Int_event_batch_num = Event_idx.shape[0] // 2
+        Int_event_batch_num = Int_event_batch_num * 2
+        Event_idx_batch_select = np.random.choice(Event_idx.shape[0], Int_event_batch_num, replace=False)
+        Event_idx = Event_idx[Event_idx_batch_select]
+
+        Int_censor_batch_num = Censored_idx.shape[0] // (self.batch_size - 2)
+        Int_censor_batch_num = Int_censor_batch_num * (self.batch_size - 2)
+        Censored_idx_batch_select = np.random.choice(Censored_idx.shape[0], Int_censor_batch_num, replace=False)
+        Censored_idx = Censored_idx[Censored_idx_batch_select]
+
+        Event_idx_selected = np.random.choice(Event_idx, size=(len(Event_idx) // 2, 2), replace=False)
+        Censored_idx_selected = np.random.choice(Censored_idx, size=(
+            (Censored_idx.shape[0] // (self.batch_size - 2)), (self.batch_size - 2)), replace=False)
+
+        if Event_idx_selected.shape[0] > Censored_idx_selected.shape[0]:
+            Event_idx_selected = Event_idx_selected[:Censored_idx_selected.shape[0], :]
+        else:
+            Censored_idx_selected = Censored_idx_selected[:Event_idx_selected.shape[0], :]
+
+        for c in range(Event_idx_selected.shape[0]):
+            train_batch_sampler.append(
+                Event_idx_selected[c, :].flatten().tolist() + Censored_idx_selected[c, :].flatten().tolist())
+
+        return iter(train_batch_sampler)
+
+    def __len__(self):
+        return len(self.event_list) // 2

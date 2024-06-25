@@ -73,6 +73,7 @@ def get_params(path):
                   "EPOCHS": default_int(params, "EPOCHS", 1000),
                   "SAVE_EPOCHS": default_int(params, "SAVE_EPOCHS", 100),
                   "BATCH_SIZE": default_int(params, "BATCH", 3),
+                  "LR": default_float(params, "LR", 1e-4),
                   "NORMALISE_CM": default_true(params, "NORMALISE_CM"),
                   "LAYOUT": default_str(params, "LAYOUT", "square"),
                   "SEPARATION": default_int(params, "SEPARATION", 140),
@@ -83,12 +84,13 @@ def get_params(path):
                   "YPX_COL": default_str(params, "YPX_COL", "Y(px)"),
                   "X_COL": default_str(params, "XPX_COL", "X(um)"),
                   "Y_COL": default_str(params, "YPX_COL", "Y(um)"),
-                  "FOLD": default_int(params, "FOLD", 0),
                   "N_MESSAGE_PASSING": default_int(params, "N_MESSAGE_PASSING", 1),
+                  "HIDDEN_FEATURES": default_int(params, "HIDDEN_FEATURES", 64),
                   "VALIDATE": default_true(params, "VALIDATE"),
                   "NOSIE_CELLS": default_float(params, "NOISE_CELLS", 0.1),
                   "NOISE_ATT": default_float(params, "NOISE_ATT", 1),
-                  "NOISE": default_float(params, "NOISE", 1),
+                  "NOISE_EDGES": default_float(params, "NOISE", 1),
+                  "SHUFFLE": default_false(params, "SHUFFLE"),
                   "THRESHOLD": default_float(params, "NOISE_CELLS", None)
                   }
     return param_dict

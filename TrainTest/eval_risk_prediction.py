@@ -30,7 +30,7 @@ from Utilities.default_args import get_params
 from EdgeGraph.utils import order_files, get_id
 from EdgeGraph.data import graph_object
 from EdgeGraph.models import GraphAttSurv
-from EdgeGraph.eval import  calculate_cindex, mean_acc
+from EdgeGraph.eval import calculate_cindex, mean_acc
 
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -314,11 +314,3 @@ acc_file.write(test_val + '\n')
 acc_file.close()
 
 print('Evaluation complete.')
-
-
-
-
-
-
-
-

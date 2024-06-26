@@ -82,8 +82,9 @@ out_features = params["OUT_FEATURES"]
 
 # ---------------------------------------------- Loading the Data ------------------------------------------------------
 
-node_files, edge_files = order_files(params["NODE_DIR"],
-                                     params["EDGE_DIR"])
+sn = params["SN"]
+node_files, edge_files = order_files(os.path.join(params[f"SN{sn}_DIR"], 'NodeFiles'),
+                                     os.path.join(params[f"SN{sn}_DIR"], 'EdgeFiles'))
 
 train_test = pd.read_csv(params["CV_PATH"])
 train_test['id'].astype(str)

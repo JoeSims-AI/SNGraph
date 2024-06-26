@@ -64,8 +64,9 @@ outcomes_df['core2'] = outcomes_df['core2'].astype(str)
 
 tumour100 = outcomes_df[outcomes_df['patients_min_1corewith100'] == 'yes']
 
-node_files, edge_files = order_files(params["NODE_DIR"],
-                                     params["EDGE_DIR"])
+sn = params["SN"]
+node_files, edge_files = order_files(os.path.join(params[f"SN{sn}_DIR"], 'NodeFiles'),
+                                     os.path.join(params[f"SN{sn}_DIR"], 'EdgeFiles'))
 
 node_ids = [get_id(f) for f in node_files]
 
